@@ -56,12 +56,6 @@
 #define RKISP1_MAX_SENSOR	2
 #define RKISP1_MAX_PIPELINE	4
 
-enum rkisp1_isp_ver {
-	ISP_V10 = 0,
-	ISP_V11,
-	ISP_V12
-};
-
 /*
  * struct rkisp1_pipeline - An ISP hardware pipeline
  *
@@ -106,7 +100,7 @@ struct rkisp1_device {
 	int irq;
 	struct device *dev;
 	struct clk *clks[RKISP1_MAX_BUS_CLK];
-	int num_clks;
+	int clk_size;
 	struct v4l2_device v4l2_dev;
 	struct v4l2_ctrl_handler ctrl_handler;
 	struct media_device media_dev;
@@ -122,10 +116,6 @@ struct rkisp1_device {
 	struct rkisp1_pipeline pipe;
 	struct vb2_alloc_ctx *alloc_ctx;
 	struct iommu_domain *domain;
-	enum rkisp1_isp_ver isp_ver;
-	const unsigned int *clk_rate_tbl;
-	int num_clk_rate_tbl;
-	atomic_t open_cnt;
 };
 
 #endif

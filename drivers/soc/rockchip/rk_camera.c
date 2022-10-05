@@ -463,11 +463,12 @@ static int sensor_power_default_cb (struct rk29camera_gpio_res *res, int on)
 	        if (on) {
 			regulator_set_voltage(ldo_28, power_pmu_voltage1, power_pmu_voltage1);
 			ret = regulator_enable(ldo_28);
+			//printk("%s set ldo7 vcc28_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_28));
 			regulator_put(ldo_28);
 
 			msleep(10);
 		} else {
-			if (regulator_is_enabled(ldo_28) > 0)
+			while(regulator_is_enabled(ldo_28) > 0)
 				regulator_disable(ldo_28);
 			regulator_put(ldo_28);
 		}
@@ -479,11 +480,12 @@ static int sensor_power_default_cb (struct rk29camera_gpio_res *res, int on)
 			regulator_set_voltage(ldo_18, power_pmu_voltage2, power_pmu_voltage2);
 			//regulator_set_suspend_voltage(ldo, 1800000);
 			ret = regulator_enable(ldo_18);
+			//printk("%s set ldo1 vcc18_cif=%dmV end\n", __func__, regulator_get_voltage(ldo_18));
 			regulator_put(ldo_18);
 
 			msleep(10);
 		} else {
-			if (regulator_is_enabled(ldo_18) > 0)
+			while(regulator_is_enabled(ldo_18) > 0)
 				regulator_disable(ldo_18);
 			regulator_put(ldo_18);
 		}
@@ -582,7 +584,7 @@ static int sensor_powerdown_default_cb (struct rk29camera_gpio_res *res, int on)
 			ret = regulator_enable(powerdown_pmu);
 			regulator_put(powerdown_pmu);
 		} else {
-			if (regulator_is_enabled(powerdown_pmu) > 0)
+			while(regulator_is_enabled(powerdown_pmu) > 0)
 				regulator_disable(powerdown_pmu);
 			regulator_put(powerdown_pmu);
 		}

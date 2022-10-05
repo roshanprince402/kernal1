@@ -854,8 +854,7 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 	int fssp;
 	int gpio;
 
-	lrclk_div = snd_pcm_format_physical_width(params_format(params))
-		* params_channels(params);
+	lrclk_div = snd_soc_params_to_frame_size(params);
 	if (lrclk_div == 0) {
 		dev_err(dev, "No LRCLK?\n");
 		return -EINVAL;
@@ -1349,14 +1348,12 @@ static struct snd_soc_codec_driver pcm512x_codec_driver = {
 	.set_bias_level = pcm512x_set_bias_level,
 	.idle_bias_off = true,
 
-	.component_driver = {
-		.controls		= pcm512x_controls,
-		.num_controls		= ARRAY_SIZE(pcm512x_controls),
-		.dapm_widgets		= pcm512x_dapm_widgets,
-		.num_dapm_widgets	= ARRAY_SIZE(pcm512x_dapm_widgets),
-		.dapm_routes		= pcm512x_dapm_routes,
-		.num_dapm_routes	= ARRAY_SIZE(pcm512x_dapm_routes),
-	},
+	.controls = pcm512x_controls,
+	.num_controls = ARRAY_SIZE(pcm512x_controls),
+	.dapm_widgets = pcm512x_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(pcm512x_dapm_widgets),
+	.dapm_routes = pcm512x_dapm_routes,
+	.num_dapm_routes = ARRAY_SIZE(pcm512x_dapm_routes),
 };
 
 static const struct regmap_range_cfg pcm512x_range = {

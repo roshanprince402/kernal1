@@ -38,9 +38,9 @@ static inline unsigned long array_index_mask_nospec(unsigned long index,
 {
 	unsigned long mask;
 
-	asm volatile ("cmp %1,%2; sbb %0,%0;"
+	asm ("cmp %1,%2; sbb %0,%0;"
 			:"=r" (mask)
-			:"g"(size),"r" (index)
+			:"r"(size),"r" (index)
 			:"cc");
 	return mask;
 }

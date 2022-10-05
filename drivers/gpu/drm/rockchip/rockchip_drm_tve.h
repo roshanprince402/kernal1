@@ -157,7 +157,6 @@ struct rockchip_tve {
 	u32 lumafilter2;
 	u32 daclevel;
 	u32 dac1level;
-	u32 preferred_mode;
 	struct mutex suspend_lock;	/* mutex for tve resume operation*/
 };
 

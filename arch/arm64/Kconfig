@@ -84,6 +84,7 @@ config ARM64
 	select HAVE_PERF_USER_STACK_DUMP
 	select HAVE_REGS_AND_STACK_ACCESS_API
 	select HAVE_RCU_TABLE_FREE
+	select HAVE_PREEMPT_LAZY
 	select HAVE_SYSCALL_TRACEPOINTS
 	select HAVE_KPROBES
 	select HAVE_KRETPROBES if HAVE_KPROBES
@@ -157,6 +158,10 @@ config ARM64_CONT_SHIFT
 
 config NO_IOPORT_MAP
 	def_bool y if !PCI
+
+config ILLEGAL_POINTER_VALUE
+	hex
+	default 0xdead000000000000
 
 config STACKTRACE_SUPPORT
 	def_bool y
@@ -426,20 +431,6 @@ config ARM64_ERRATUM_843419
 
 	  If unsure, say Y.
 
-config ARM64_ERRATUM_1024718
-	bool "Cortex-A55: 1024718: Update of DBM/AP bits without break before make might result in incorrect update"
-	default y if !ARCH_ROCKCHIP
-	help
-	  This option adds work around for Arm Cortex-A55 Erratum 1024718.
-
-	  Affected Cortex-A55 cores (r0p0, r0p1, r1p0) could cause incorrect
-	  update of the hardware dirty bit when the DBM/AP bits are updated
-	  without a break-before-make. The work around is to disable the usage
-	  of hardware DBM locally on the affected cores. CPUs not affected by
-	  erratum will continue to use the feature.
-
-	  If unsure, say Y.
-
 config CAVIUM_ERRATUM_22375
 	bool "Cavium erratum 22375, 24313"
 	default y
@@ -670,7 +661,7 @@ config XEN_DOM0
 
 config XEN
 	bool "Xen guest support on ARM64"
-	depends on ARM64 && OF
+	depends on ARM64 && OF && !PREEMPT_RT_FULL
 	select SWIOTLB_XEN
 	help
 	  Say Y if you want to run Linux in a Virtual Machine on Xen on ARM64.

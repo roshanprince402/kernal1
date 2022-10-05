@@ -752,9 +752,9 @@ int fcoe_ctlr_els_send(struct fcoe_ctlr *fip, struct fc_lport *lport,
 	case ELS_LOGO:
 		if (fip->mode == FIP_MODE_VN2VN) {
 			if (fip->state != FIP_ST_VNMP_UP)
-				goto drop;
+				return -EINVAL;
 			if (ntoh24(fh->fh_d_id) == FC_FID_FLOGI)
-				goto drop;
+				return -EINVAL;
 		} else {
 			if (fip->state != FIP_ST_ENABLED)
 				return 0;
@@ -831,7 +831,7 @@ static unsigned long fcoe_ctlr_age_fcfs(struct fcoe_ctlr *fip)
 
 	INIT_LIST_HEAD(&del_list);
 
-	stats = per_cpu_ptr(fip->lp->stats, get_cpu());
+	stats = per_cpu_ptr(fip->lp->stats, get_cpu_light());
 
 	list_for_each_entry_safe(fcf, next, &fip->fcfs, list) {
 		deadline = fcf->time + fcf->fka_period + fcf->fka_period / 2;
@@ -867,7 +867,7 @@ static unsigned long fcoe_ctlr_age_fcfs(struct fcoe_ctlr *fip)
 				sel_time = fcf->time;
 		}
 	}
-	put_cpu();
+	put_cpu_light();
 
 	list_for_each_entry_safe(fcf, next, &del_list, list) {
 		/* Removes fcf from current list */

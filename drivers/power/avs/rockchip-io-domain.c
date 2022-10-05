@@ -306,7 +306,7 @@ static const struct rockchip_iodomain_soc_data soc_data_px30 = {
 		"vccio3",
 		"vccio4",
 		"vccio5",
-		"vccio-oscgpi",
+		"vccio_oscgpi",
 	},
 	.init = px30_iodomain_init,
 };
@@ -483,36 +483,6 @@ static const struct rockchip_iodomain_soc_data soc_data_rk3399_pmu = {
 	.init = rk3399_pmu_iodomain_init,
 };
 
-static const struct rockchip_iodomain_soc_data soc_data_rv1108 = {
-	.grf_offset = 0x404,
-	.supply_names = {
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		"vccio1",
-		"vccio2",
-		"vccio3",
-		"vccio5",
-		"vccio6",
-	},
-
-};
-
-static const struct rockchip_iodomain_soc_data soc_data_rv1108_pmu = {
-	.grf_offset = 0x104,
-	.supply_names = {
-		"pmu",
-	},
-};
-
 static const struct of_device_id rockchip_iodomain_match[] = {
 	{
 		.compatible = "rockchip,px30-io-voltage-domain",
@@ -561,14 +531,6 @@ static const struct of_device_id rockchip_iodomain_match[] = {
 	{
 		.compatible = "rockchip,rk3399-pmu-io-voltage-domain",
 		.data = (void *)&soc_data_rk3399_pmu
-	},
-	{
-		.compatible = "rockchip,rv1108-io-voltage-domain",
-		.data = (void *)&soc_data_rv1108
-	},
-	{
-		.compatible = "rockchip,rv1108-pmu-io-voltage-domain",
-		.data = (void *)&soc_data_rv1108_pmu
 	},
 	{ /* sentinel */ },
 };

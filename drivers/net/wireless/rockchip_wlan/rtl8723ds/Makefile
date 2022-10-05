@@ -152,7 +152,7 @@ CONFIG_PLATFORM_RTL8197D = n
 
 CONFIG_DRVEXT_MODULE = n
 
-export TopDIR ?= $(src)
+export TopDIR ?= $(shell pwd)/drivers/net/wireless/rockchip_wlan/rtl8723ds
 
 ########### COMMON  #################################
 ifeq ($(CONFIG_GSPI_HCI), y)

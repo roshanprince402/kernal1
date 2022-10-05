@@ -274,11 +274,6 @@
 	};
 };
 
-&bus_apll {
-	bus-supply = <&vdd_logic>;
-	status = "okay";
-};
-
 &cpu0 {
 	cpu-supply = <&vdd_arm>;
 };
@@ -336,7 +331,7 @@
 		clock-output-names = "rk808-clkout1", "rk808-clkout2";
 		//fb-inner-reg-idxs = <2>;
 		/* 1: rst regs (default in codes), 0: rst the pmic */
-		pmic-reset-func = <1>;
+		pmic-reset-func = <0>;
 
 		vcc1-supply = <&vcc5v0_sys>;
 		vcc2-supply = <&vcc5v0_sys>;
@@ -429,16 +424,16 @@
 				};
 			};
 
-			vcc_1v0: LDO_REG1 {
+			vcc2v5_ddr: LDO_REG1 {
 				regulator-always-on;
 				regulator-boot-on;
-				regulator-min-microvolt = <1000000>;
-				regulator-max-microvolt = <1000000>;
+				regulator-min-microvolt = <2500000>;
+				regulator-max-microvolt = <2500000>;
 				regulator-initial-mode = <0x1>;
-				regulator-name = "vcc_1v0";
+				regulator-name = "vcc2v5_ddr";
 				regulator-state-mem {
 					regulator-on-in-suspend;
-					regulator-suspend-microvolt = <1000000>;
+					regulator-suspend-microvolt = <2500000>;
 				};
 			};
 
@@ -485,7 +480,7 @@
 			vccio_sd: LDO_REG5 {
 				regulator-always-on;
 				regulator-boot-on;
-				regulator-min-microvolt = <1800000>;
+				regulator-min-microvolt = <3300000>;
 				regulator-max-microvolt = <3300000>;
 
 				regulator-name = "vccio_sd";
@@ -558,13 +553,15 @@
 				};
 			};
 
-			vcc5v0_host: SWITCH_REG1 {
-				regulator-name = "vcc5v0_host";
-			};
-
-			vcc3v3_lcd: SWITCH_REG2 {
+			vcc3v3_lcd: SWITCH_REG1 {
 				regulator-boot-on;
 				regulator-name = "vcc3v3_lcd";
+			};
+
+			vcc5v0_host: SWITCH_REG2 {
+				regulator-always-on;
+				regulator-boot-on;
+				regulator-name = "vcc5v0_host";
 			};
 		};
 
@@ -733,9 +730,6 @@
 };
 
 &tsadc {
-	pinctrl-names = "init", "default";
-	pinctrl-0 = <&tsadc_otp_gpio>;
-	pinctrl-1 = <&tsadc_otp_out>;
 	status = "okay";
 };
 
@@ -787,25 +781,4 @@
 
 &vpu_combo {
 	status = "okay";
-};
-
-&firmware_android {
-	compatible = "android,firmware";
-	fstab {
-		compatible = "android,fstab";
-		system {
-			compatible = "android,system";
-			dev = "/dev/block/by-name/system";
-			type = "ext4";
-			mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-			fsmgr_flags = "wait";
-		};
-		vendor {
-			compatible = "android,vendor";
-			dev = "/dev/block/by-name/vendor";
-			type = "ext4";
-			mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-			fsmgr_flags = "wait";
-		};
-	};
 };

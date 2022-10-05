@@ -791,10 +791,8 @@ static int listxattr_filler(struct dir_context *ctx, const char *name,
 			size = handler->list(handler, b->dentry,
 					     b->buf + b->pos, b->size, name,
 					     namelen);
-			if (b->pos + size > b->size) {
-				b->pos = -ERANGE;
+			if (size > b->size)
 				return -ERANGE;
-			}
 		} else {
 			size = handler->list(handler, b->dentry,
 					     NULL, 0, name, namelen);

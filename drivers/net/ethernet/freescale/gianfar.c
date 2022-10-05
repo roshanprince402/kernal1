@@ -3053,6 +3053,9 @@ static void gfar_process_frame(struct net_device *ndev, struct sk_buff *skb)
 	if (ndev->features & NETIF_F_RXCSUM)
 		gfar_rx_checksum(skb, fcb);
 
+	/* Tell the skb what kind of packet this is */
+	skb->protocol = eth_type_trans(skb, ndev);
+
 	/* There's need to check for NETIF_F_HW_VLAN_CTAG_RX here.
 	 * Even if vlan rx accel is disabled, on some chips
 	 * RXFCB_VLN is pseudo randomly set.
@@ -3123,15 +3126,13 @@ int gfar_clean_rx_ring(struct gfar_priv_rx_q *rx_queue, int rx_work_limit)
 			continue;
 		}
 
-		gfar_process_frame(ndev, skb);
-
 		/* Increment the number of packets */
 		total_pkts++;
 		total_bytes += skb->len;
 
 		skb_record_rx_queue(skb, rx_queue->qindex);
 
-		skb->protocol = eth_type_trans(skb, ndev);
+		gfar_process_frame(ndev, skb);
 
 		/* Send the packet up the stack */
 		napi_gro_receive(&rx_queue->grp->napi_rx, skb);

@@ -380,6 +380,7 @@ static void __init setup_command_line(char *command_line)
  */
 
 static __initdata DECLARE_COMPLETION(kthreadd_done);
+extern bool slab_do_irq_on;
 
 static noinline void __init_refok rest_init(void)
 {
@@ -398,6 +399,7 @@ static noinline void __init_refok rest_init(void)
 	rcu_read_lock();
 	kthreadd_task = find_task_by_pid_ns(pid, &init_pid_ns);
 	rcu_read_unlock();
+	slab_do_irq_on = true;
 	complete(&kthreadd_done);
 
 	/*
@@ -529,28 +531,13 @@ asmlinkage __visible void __init start_kernel(void)
 	setup_command_line(command_line);
 	setup_nr_cpu_ids();
 	setup_per_cpu_areas();
+	softirq_early_init();
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
 	build_all_zonelists(NULL, NULL);
 	page_alloc_init();
 
-#ifdef CONFIG_ARCH_ROCKCHIP
-	{
-		const char *s = boot_command_line;
-		const char *e = &boot_command_line[strlen(boot_command_line)];
-		int n =
-		    pr_notice("Kernel command line: %s\n", boot_command_line);
-		n -= strlen("Kernel command line: ");
-		s += n;
-		/* command line maybe too long to print one time */
-		while (n > 0 && s < e) {
-			n = pr_cont("%s\n", s);
-			s += n;
-		}
-	}
-#else
 	pr_notice("Kernel command line: %s\n", boot_command_line);
-#endif
 	parse_early_param();
 	after_dashes = parse_args("Booting kernel",
 				  static_command_line, __start___param,

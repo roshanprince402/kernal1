@@ -408,8 +408,7 @@ static void dwc3_rockchip_otg_extcon_evt_work(struct work_struct *work)
 	unsigned long		flags;
 	int			ret;
 	int			val;
-	u32			reg;
-	u32			count = 0;
+	u32			reg, count;
 
 	mutex_lock(&rockchip->lock);
 
@@ -442,16 +441,6 @@ static void dwc3_rockchip_otg_extcon_evt_work(struct work_struct *work)
 			reset_control_assert(rockchip->otg_rst);
 			udelay(1);
 			reset_control_deassert(rockchip->otg_rst);
-
-			/* Wait until dwc3 core resume from PM suspend */
-			while (dwc->dev->power.is_suspended) {
-				if (++count > 1000) {
-					dev_err(rockchip->dev,
-						"wait for dwc3 core resume timeout!\n");
-						goto out;
-				}
-				usleep_range(100, 200);
-			}
 
 			pm_runtime_get_sync(rockchip->dev);
 			pm_runtime_get_sync(dwc->dev);
@@ -585,6 +574,7 @@ disconnect:
 
 			if (hcd->state != HC_STATE_HALT) {
 				xhci->xhc_state |= XHCI_STATE_REMOVING;
+				count = 0;
 
 				/*
 				 * Wait until XHCI controller resume from
@@ -969,11 +959,9 @@ static int __maybe_unused dwc3_rockchip_resume(struct device *dev)
 	struct dwc3_rockchip *rockchip = dev_get_drvdata(dev);
 	struct dwc3 *dwc = rockchip->dwc;
 
-	if (!rockchip->connected) {
-		reset_control_assert(rockchip->otg_rst);
-		udelay(1);
-		reset_control_deassert(rockchip->otg_rst);
-	}
+	reset_control_assert(rockchip->otg_rst);
+	udelay(1);
+	reset_control_deassert(rockchip->otg_rst);
 
 	rockchip->suspended = false;
 

@@ -135,7 +135,7 @@ EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock);
 void snd_pcm_stream_lock_irq(struct snd_pcm_substream *substream)
 {
 	if (!substream->pcm->nonatomic)
-		local_irq_disable();
+		local_irq_disable_nort();
 	snd_pcm_stream_lock(substream);
 }
 EXPORT_SYMBOL_GPL(snd_pcm_stream_lock_irq);
@@ -150,7 +150,7 @@ void snd_pcm_stream_unlock_irq(struct snd_pcm_substream *substream)
 {
 	snd_pcm_stream_unlock(substream);
 	if (!substream->pcm->nonatomic)
-		local_irq_enable();
+		local_irq_enable_nort();
 }
 EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock_irq);
 
@@ -158,7 +158,7 @@ unsigned long _snd_pcm_stream_lock_irqsave(struct snd_pcm_substream *substream)
 {
 	unsigned long flags = 0;
 	if (!substream->pcm->nonatomic)
-		local_irq_save(flags);
+		local_irq_save_nort(flags);
 	snd_pcm_stream_lock(substream);
 	return flags;
 }
@@ -176,7 +176,7 @@ void snd_pcm_stream_unlock_irqrestore(struct snd_pcm_substream *substream,
 {
 	snd_pcm_stream_unlock(substream);
 	if (!substream->pcm->nonatomic)
-		local_irq_restore(flags);
+		local_irq_restore_nort(flags);
 }
 EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock_irqrestore);
 
@@ -578,15 +578,6 @@ static int snd_pcm_hw_params(struct snd_pcm_substream *substream,
 	runtime->byte_align = bits / 8;
 	runtime->min_align = frames;
 
-#ifdef CONFIG_SND_SOC_ROCKCHIP_VAD
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
-	    snd_pcm_vad_attached(substream) &&
-	    frames_to_bytes(runtime, runtime->buffer_size) < 256 * 1024) {
-		pr_info("pcm buffer_size should be larger than 256 KB\n");
-		err = -EINVAL;
-		goto _error;
-	}
-#endif
 	/* Default sw params */
 	runtime->tstamp_mode = SNDRV_PCM_TSTAMP_NONE;
 	runtime->period_step = 1;
@@ -1075,19 +1066,6 @@ static void snd_pcm_post_start(struct snd_pcm_substream *substream, int state)
 	    runtime->silence_size > 0)
 		snd_pcm_playback_silence(substream, ULONG_MAX);
 	snd_pcm_timer_notify(substream, SNDRV_TIMER_EVENT_MSTART);
-#ifdef CONFIG_SND_SOC_ROCKCHIP_VAD
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
-	    snd_pcm_vad_attached(substream) &&
-	    snd_pcm_vad_avail(substream)) {
-		snd_pcm_uframes_t avail;
-
-		avail = snd_pcm_vad_avail(substream);
-		snd_pcm_vad_memcpy(substream,
-				   runtime->dma_area,
-				   avail);
-		pr_info("%s: vad copy buffer %lu frames\n", __func__, avail);
-	}
-#endif
 }
 
 static struct action_ops snd_pcm_action_start = {
@@ -2749,7 +2727,6 @@ static int snd_pcm_sync_ptr(struct snd_pcm_substream *substream,
 	sync_ptr.s.status.hw_ptr = status->hw_ptr;
 	sync_ptr.s.status.tstamp = status->tstamp;
 	sync_ptr.s.status.suspended_state = status->suspended_state;
-	sync_ptr.s.status.audio_tstamp = status->audio_tstamp;
 	snd_pcm_stream_unlock_irq(substream);
 	if (copy_to_user(_sync_ptr, &sync_ptr, sizeof(sync_ptr)))
 		return -EFAULT;
@@ -3431,7 +3408,7 @@ int snd_pcm_lib_default_mmap(struct snd_pcm_substream *substream,
 					 area,
 					 substream->runtime->dma_area,
 					 substream->runtime->dma_addr,
-					 substream->runtime->dma_bytes);
+					 area->vm_end - area->vm_start);
 #endif /* CONFIG_X86 */
 	/* mmap with fault handler */
 	area->vm_ops = &snd_pcm_vm_ops_data_fault;

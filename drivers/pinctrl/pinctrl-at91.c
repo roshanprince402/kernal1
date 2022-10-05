@@ -191,7 +191,7 @@ struct at91_pinctrl {
 	struct at91_pinctrl_mux_ops *ops;
 };
 
-static inline const struct at91_pin_group *at91_pinctrl_find_group_by_name(
+static const inline struct at91_pin_group *at91_pinctrl_find_group_by_name(
 				const struct at91_pinctrl *info,
 				const char *name)
 {

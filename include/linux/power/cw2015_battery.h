@@ -112,7 +112,6 @@ struct cw_battery {
 	u32 bat_mode;
 	int bat_change;
 	bool dual_battery;
-	int charge_count;
 };
 
 #endif
