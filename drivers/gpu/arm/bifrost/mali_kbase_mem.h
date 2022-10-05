@@ -35,6 +35,9 @@
 #endif
 
 #include <linux/kref.h>
+#ifdef CONFIG_UMP
+#include <linux/ump.h>
+#endif				/* CONFIG_UMP */
 #include "mali_base_kernel.h"
 #include <mali_kbase_hw.h>
 #include "mali_kbase_pm.h"
@@ -74,6 +77,7 @@ struct kbase_cpu_mapping {
 
 enum kbase_memory_type {
 	KBASE_MEM_TYPE_NATIVE,
+	KBASE_MEM_TYPE_IMPORTED_UMP,
 	KBASE_MEM_TYPE_IMPORTED_UMM,
 	KBASE_MEM_TYPE_IMPORTED_USER_BUF,
 	KBASE_MEM_TYPE_ALIAS,
@@ -129,6 +133,9 @@ struct kbase_mem_phy_alloc {
 
 	/* member in union valid based on @a type */
 	union {
+#ifdef CONFIG_UMP
+		ump_dd_handle ump_handle;
+#endif /* CONFIG_UMP */
 #if defined(CONFIG_DMA_SHARED_BUFFER)
 		struct {
 			struct dma_buf *dma_buf;
@@ -197,7 +204,8 @@ static inline void kbase_mem_phy_alloc_gpu_unmapped(struct kbase_mem_phy_alloc *
  */
 static inline bool kbase_mem_is_imported(enum kbase_memory_type type)
 {
-	return (type == KBASE_MEM_TYPE_IMPORTED_UMM) ||
+	return (type == KBASE_MEM_TYPE_IMPORTED_UMP) ||
+		(type == KBASE_MEM_TYPE_IMPORTED_UMM) ||
 		(type == KBASE_MEM_TYPE_IMPORTED_USER_BUF);
 }
 
@@ -1055,8 +1063,6 @@ int kbase_alloc_phy_pages_helper(struct kbase_mem_phy_alloc *alloc,
  * @alloc:              allocation object to add pages to
  * @pool:               Memory pool to allocate from
  * @nr_pages_requested: number of physical pages to allocate
- * @prealloc_sa:        Information about the partial allocation if the amount
- *                      of memory requested is not a multiple of 2MB.
  *
  * Allocates \a nr_pages_requested and updates the alloc object. This function
  * does not allocate new pages from the kernel, and therefore will never trigger
@@ -1086,16 +1092,13 @@ int kbase_alloc_phy_pages_helper(struct kbase_mem_phy_alloc *alloc,
  * @pool must be alloc->imported.kctx->lp_mem_pool. Otherwise it must be
  * alloc->imported.kctx->mem_pool.
  *
- * @prealloc_sa shall be set to NULL if it has been consumed by this function.
- *
  * Return: Pointer to array of allocated pages. NULL on failure.
  *
  * Note : Caller must hold pool->pool_lock
  */
 struct tagged_addr *kbase_alloc_phy_pages_helper_locked(
 		struct kbase_mem_phy_alloc *alloc, struct kbase_mem_pool *pool,
-		size_t nr_pages_requested,
-		struct kbase_sub_alloc **prealloc_sa);
+		size_t nr_pages_requested);
 
 /**
 * @brief Free physical pages.

@@ -26,7 +26,11 @@
 
 #ifdef __KERNEL__
 
-#define THREADINFO_GFP		(GFP_KERNEL | __GFP_NOTRACK | __GFP_ZERO)
+#ifdef CONFIG_DEBUG_STACK_USAGE
+# define THREADINFO_GFP		(GFP_KERNEL | __GFP_NOTRACK | __GFP_ZERO)
+#else
+# define THREADINFO_GFP		(GFP_KERNEL | __GFP_NOTRACK)
+#endif
 
 /*
  * flag set/clear/test wrappers
@@ -69,7 +73,17 @@ static inline int test_ti_thread_flag(struct thread_info *ti, int flag)
 #define test_thread_flag(flag) \
 	test_ti_thread_flag(current_thread_info(), flag)
 
-#define tif_need_resched() test_thread_flag(TIF_NEED_RESCHED)
+#ifdef CONFIG_PREEMPT_LAZY
+#define tif_need_resched()	(test_thread_flag(TIF_NEED_RESCHED) || \
+				 test_thread_flag(TIF_NEED_RESCHED_LAZY))
+#define tif_need_resched_now()	(test_thread_flag(TIF_NEED_RESCHED))
+#define tif_need_resched_lazy()	test_thread_flag(TIF_NEED_RESCHED_LAZY))
+
+#else
+#define tif_need_resched()	test_thread_flag(TIF_NEED_RESCHED)
+#define tif_need_resched_now()	test_thread_flag(TIF_NEED_RESCHED)
+#define tif_need_resched_lazy()	0
+#endif
 
 #if defined TIF_RESTORE_SIGMASK && !defined HAVE_SET_RESTORE_SIGMASK
 /*

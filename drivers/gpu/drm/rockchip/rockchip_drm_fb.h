@@ -31,15 +31,25 @@ rockchip_fb_alloc(struct drm_device *dev, struct drm_mode_fb_cmd2 *mode_cmd,
 
 dma_addr_t rockchip_fb_get_dma_addr(struct drm_framebuffer *fb,
 				    unsigned int plane);
-void *rockchip_fb_get_kvaddr(struct drm_framebuffer *fb, unsigned int plane);
 
-#define to_rockchip_fb(x) container_of(x, struct rockchip_drm_fb, fb)
+#ifdef CONFIG_ARM_ROCKCHIP_DMC_DEVFREQ
+int rockchip_dmcfreq_vop_bandwidth_request(struct devfreq *devfreq,
+					   unsigned int bw_mbyte);
+void rockchip_dmcfreq_vop_bandwidth_update(struct devfreq *devfreq,
+					   unsigned int bw_mbyte);
+#else
+static inline int
+rockchip_dmcfreq_vop_bandwidth_request(struct devfreq *devfreq,
+				       unsigned int bw_mbyte)
+{
+	return 0;
+}
 
-struct rockchip_drm_fb {
-	struct drm_framebuffer fb;
-	dma_addr_t dma_addr[ROCKCHIP_MAX_FB_BUFFER];
-	void *kvaddr[ROCKCHIP_MAX_FB_BUFFER];
-	struct drm_gem_object *obj[ROCKCHIP_MAX_FB_BUFFER];
-	struct rockchip_logo *logo;
-};
+static inline void
+rockchip_dmcfreq_vop_bandwidth_update(struct devfreq *devfreq,
+				      unsigned int bw_mbyte)
+{
+}
+#endif
+
 #endif /* _ROCKCHIP_DRM_FB_H */

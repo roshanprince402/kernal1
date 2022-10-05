@@ -35,7 +35,6 @@
 #include <linux/tty_flip.h>
 #include <linux/wakelock.h>
 #include <linux/ptrace.h>
-#include <linux/proc_fs.h>
 
 #ifdef CONFIG_FIQ_DEBUGGER_TRUST_ZONE
 #include <linux/rockchip/rockchip_sip.h>
@@ -594,20 +593,24 @@ static bool fiq_debugger_fiq_exec(struct fiq_debugger_state *state,
 	if (!strcmp(cmd, "help") || !strcmp(cmd, "?")) {
 		fiq_debugger_help(state);
 	} else if (!strcmp(cmd, "pc")) {
-		fiq_debugger_dump_pc(&state->output, regs);
+		if (regs)
+			fiq_debugger_dump_pc(&state->output, regs);
 	} else if (!strcmp(cmd, "regs")) {
-		fiq_debugger_dump_regs(&state->output, regs);
+		if (regs)
+			fiq_debugger_dump_regs(&state->output, regs);
 	} else if (!strcmp(cmd, "allregs")) {
-		fiq_debugger_dump_allregs(&state->output, regs);
+		if (regs)
+			fiq_debugger_dump_allregs(&state->output, regs);
 	} else if (!strcmp(cmd, "bt")) {
-		if (user_mode((struct pt_regs *)regs) ||
-		    ((unsigned long)svc_sp < va_start) ||
-		    ((unsigned long)svc_sp > -256UL))
-			fiq_debugger_printf(&state->output, "User mode\n");
-		else
-			fiq_debugger_dump_stacktrace(&state->output, regs,
-						     100, svc_sp);
-
+		if (regs) {
+			if (user_mode((struct pt_regs *)regs) ||
+			    ((unsigned long)svc_sp < va_start) ||
+			    ((unsigned long)svc_sp > -256UL))
+				fiq_debugger_printf(&state->output, "User mode\n");
+			else
+				fiq_debugger_dump_stacktrace(&state->output, regs,
+							     100, svc_sp);
+		}
 	} else if (!strncmp(cmd, "reset", 5)) {
 		cmd += 5;
 		while (*cmd == ' ')
@@ -1206,41 +1209,6 @@ static void fiq_tty_poll_put_char(struct tty_driver *driver, int line, char ch)
 }
 #endif
 
-#ifdef CONFIG_PROC_FS
-static int fiq_tty_proc_show(struct seq_file *m, void *v)
-{
-	struct tty_driver *driver = m->private;
-	struct fiq_debugger_state **states = driver->driver_state;
-	struct fiq_debugger_state *state;
-	int i;
-
-	seq_puts(m, "fiq-debugger driver\n");
-	for (i = 0; i < MAX_FIQ_DEBUGGER_PORTS; i++) {
-		state = states[i];
-		if (!state)
-			continue;
-
-		seq_printf(m, "%d:", i);
-		seq_printf(m, " state:%d", state->console_enable);
-		seq_putc(m, '\n');
-	}
-	return 0;
-}
-
-static int fiq_tty_proc_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, fiq_tty_proc_show, PDE_DATA(inode));
-}
-
-static const struct file_operations fiq_tty_proc_fops = {
-	.owner		= THIS_MODULE,
-	.open		= fiq_tty_proc_open,
-	.read		= seq_read,
-	.llseek		= seq_lseek,
-	.release	= single_release,
-};
-#endif
-
 static const struct tty_port_operations fiq_tty_port_ops;
 
 static const struct tty_operations fiq_tty_driver_ops = {
@@ -1252,9 +1220,6 @@ static const struct tty_operations fiq_tty_driver_ops = {
 	.poll_init = fiq_tty_poll_init,
 	.poll_get_char = fiq_tty_poll_get_char,
 	.poll_put_char = fiq_tty_poll_put_char,
-#endif
-#ifdef CONFIG_PROC_FS
-	.proc_fops = &fiq_tty_proc_fops,
 #endif
 };
 

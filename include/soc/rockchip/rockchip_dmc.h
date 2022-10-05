@@ -15,40 +15,21 @@
 
 #include <linux/devfreq.h>
 
-#ifdef CONFIG_ARM_ROCKCHIP_DMC_DEVFREQ
-void rockchip_dmcfreq_lock(void);
-void rockchip_dmcfreq_unlock(void);
-int rockchip_dmcfreq_wait_complete(void);
-int rockchip_dmcfreq_vop_bandwidth_request(struct devfreq *devfreq,
-					   unsigned int bw_mbyte);
-void rockchip_dmcfreq_vop_bandwidth_update(struct devfreq *devfreq,
-					   unsigned int bw_mbyte);
-
+#ifdef ROCKCHIP_PM_DOMAINS
+int rockchip_pm_register_notify_to_dmc(struct devfreq *devfreq);
 #else
-static inline void rockchip_dmcfreq_lock(void)
-{
-}
-
-static inline void rockchip_dmcfreq_unlock(void)
-{
-}
-
-static inline int rockchip_dmcfreq_wait_complete(void)
+static inline int rockchip_pm_register_notify_to_dmc(struct devfreq *devfreq)
 {
 	return 0;
 }
+#endif
 
-static inline int
-rockchip_dmcfreq_vop_bandwidth_request(struct devfreq *devfreq,
-				       unsigned int bw_mbyte)
+#ifdef CONFIG_DRM_ROCKCHIP
+int rockchip_drm_register_notifier_to_dmc(struct devfreq *devfreq);
+#else
+static inline int rockchip_drm_register_notifier_to_dmc(struct devfreq *devfreq)
 {
 	return 0;
-}
-
-static inline void
-rockchip_dmcfreq_vop_bandwidth_update(struct devfreq *devfreq,
-				      unsigned int bw_mbyte)
-{
 }
 #endif
 

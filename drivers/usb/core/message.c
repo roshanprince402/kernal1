@@ -1148,7 +1148,7 @@ void usb_disable_interface(struct usb_device *dev, struct usb_interface *intf,
  */
 void usb_disable_device(struct usb_device *dev, int skip_ep0)
 {
-	int i, j;
+	int i;
 	struct usb_hcd *hcd = bus_to_hcd(dev->bus);
 
 	/* getting rid of interfaces will disconnect
@@ -1186,11 +1186,11 @@ void usb_disable_device(struct usb_device *dev, int skip_ep0)
 			 */
 			if (hcd->self.root_hub->quirks &
 			    USB_QUIRK_AUTO_SUSPEND) {
-				for (j = skip_ep0; j < 16; ++j) {
+				for (i = skip_ep0; i < 16; ++i) {
 					usb_hcd_flush_endpoint(dev,
-							       dev->ep_out[j]);
+							       dev->ep_out[i]);
 					usb_hcd_flush_endpoint(dev,
-							       dev->ep_in[j]);
+							       dev->ep_in[i]);
 				}
 			}
 

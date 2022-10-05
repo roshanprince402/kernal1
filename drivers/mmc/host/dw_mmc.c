@@ -510,10 +510,6 @@ static void dw_mci_dmac_complete_dma(void *arg)
 		set_bit(EVENT_XFER_COMPLETE, &host->pending_events);
 		tasklet_schedule(&host->tasklet);
 	}
-
-	if ((host->quirks & DW_MCI_QUIRK_BROKEN_XFER) &&
-	    host->dir_status == DW_MCI_RECV_STATUS)
-		del_timer(&host->xfer_timer);
 }
 
 static void dw_mci_translate_sglist(struct dw_mci *host, struct mmc_data *data,
@@ -748,7 +744,6 @@ static int dw_mci_edmac_start_dma(struct dw_mci *host,
 	int ret = 0;
 
 	/* Set external dma config: burst size, burst width */
-	memset(&cfg, 0, sizeof(cfg));
 	cfg.dst_addr = host->phy_regs + fifo_offset;
 	cfg.src_addr = cfg.dst_addr;
 	cfg.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
@@ -1748,11 +1743,11 @@ static int dw_mci_data_complete(struct dw_mci *host, struct mmc_data *data)
 				data->error = -ETIMEDOUT;
 			} else if (host->dir_status ==
 					DW_MCI_RECV_STATUS) {
-				data->error = -EILSEQ;
+				data->error = -EIO;
 			}
 		} else {
 			/* SDMMC_INT_SBE is included */
-			data->error = -EILSEQ;
+			data->error = -EIO;
 		}
 
 		dev_dbg(host->dev, "data error, status 0x%08x\n", status);
@@ -1791,30 +1786,6 @@ static void dw_mci_set_drto(struct dw_mci *host)
 	if (!test_bit(EVENT_DATA_COMPLETE, &host->pending_events))
 		mod_timer(&host->dto_timer,
 			  jiffies + msecs_to_jiffies(drto_ms));
-	spin_unlock_irqrestore(&host->irq_lock, irqflags);
-}
-
-static void dw_mci_set_xfer_timeout(struct dw_mci *host)
-{
-	unsigned int xfer_clks;
-	unsigned int xfer_div;
-	unsigned int xfer_ms;
-	unsigned long irqflags;
-
-	xfer_clks = mci_readl(host, TMOUT) >> 8;
-	xfer_div = (mci_readl(host, CLKDIV) & 0xff) * 2;
-	if (xfer_div == 0)
-		xfer_div = 1;
-	xfer_ms = DIV_ROUND_UP_ULL((u64)MSEC_PER_SEC * xfer_clks * xfer_div,
-				   host->bus_hz);
-
-	/* add a bit spare time */
-	xfer_ms += 10;
-
-	spin_lock_irqsave(&host->irq_lock, irqflags);
-	if (!test_bit(EVENT_XFER_COMPLETE, &host->pending_events))
-		mod_timer(&host->xfer_timer,
-			  jiffies + msecs_to_jiffies(xfer_ms));
 	spin_unlock_irqrestore(&host->irq_lock, irqflags);
 }
 
@@ -1952,9 +1923,6 @@ static void dw_mci_tasklet_func(unsigned long priv)
 				if ((host->quirks & DW_MCI_QUIRK_BROKEN_DTO) &&
 				    (host->dir_status == DW_MCI_RECV_STATUS))
 					dw_mci_set_drto(host);
-				if ((host->quirks & DW_MCI_QUIRK_BROKEN_XFER) &&
-				    host->dir_status == DW_MCI_RECV_STATUS)
-					dw_mci_set_xfer_timeout(host);
 				break;
 			}
 
@@ -2431,9 +2399,6 @@ done:
 	host->sg = NULL;
 	smp_wmb(); /* drain writebuffer */
 	set_bit(EVENT_XFER_COMPLETE, &host->pending_events);
-
-	if (host->quirks & DW_MCI_QUIRK_BROKEN_XFER)
-		del_timer(&host->xfer_timer);
 }
 
 static void dw_mci_write_data_pio(struct dw_mci *host)
@@ -2563,9 +2528,6 @@ static irqreturn_t dw_mci_interrupt(int irq, void *dev_id)
 			del_timer(&host->cto_timer);
 			mci_writel(host, RINTSTS, DW_MCI_CMD_ERROR_FLAGS);
 			host->cmd_status = pending;
-			if ((host->quirks & DW_MCI_QUIRK_BROKEN_XFER) &&
-			    host->dir_status == DW_MCI_RECV_STATUS)
-				del_timer(&host->xfer_timer);
 			smp_wmb(); /* drain writebuffer */
 			set_bit(EVENT_CMD_COMPLETE, &host->pending_events);
 
@@ -3128,36 +3090,6 @@ exit:
 	spin_unlock_irqrestore(&host->irq_lock, irqflags);
 }
 
-static void dw_mci_xfer_timer(unsigned long arg)
-{
-	struct dw_mci *host = (struct dw_mci *)arg;
-	unsigned long irqflags;
-
-	spin_lock_irqsave(&host->irq_lock, irqflags);
-
-	if (test_bit(EVENT_XFER_COMPLETE, &host->pending_events)) {
-		/* Presumably interrupt handler couldn't delete the timer */
-		dev_warn(host->dev, "xfer when already completed\n");
-		goto exit;
-	}
-
-	switch (host->state) {
-	case STATE_SENDING_DATA:
-		host->data_status = SDMMC_INT_DRTO;
-		set_bit(EVENT_DATA_ERROR, &host->pending_events);
-		set_bit(EVENT_DATA_COMPLETE, &host->pending_events);
-		tasklet_schedule(&host->tasklet);
-		break;
-	default:
-		dev_warn(host->dev, "Unexpected xfer timeout, state %d\n",
-			 host->state);
-		break;
-	}
-
-exit:
-	spin_unlock_irqrestore(&host->irq_lock, irqflags);
-}
-
 #ifdef CONFIG_OF
 static struct dw_mci_of_quirks {
 	char *quirk;
@@ -3342,10 +3274,6 @@ int dw_mci_probe(struct dw_mci *host)
 	if (host->quirks & DW_MCI_QUIRK_BROKEN_DTO)
 		setup_timer(&host->dto_timer,
 			    dw_mci_dto_timer, (unsigned long)host);
-
-	if (host->quirks & DW_MCI_QUIRK_BROKEN_XFER)
-		setup_timer(&host->xfer_timer,
-			    dw_mci_xfer_timer, (unsigned long)host);
 
 	spin_lock_init(&host->lock);
 	spin_lock_init(&host->irq_lock);

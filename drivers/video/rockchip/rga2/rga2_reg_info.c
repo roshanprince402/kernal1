@@ -37,7 +37,8 @@
 
 extern unsigned int rga2_ROP3_code[256];
 
-static void RGA2_reg_get_param(unsigned char *base, struct rga2_req *msg)
+void
+RGA2_reg_get_param(unsigned char *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_SRC_INFO;
     RK_U32 *bRGA_SRC_X_FACTOR;
@@ -125,7 +126,8 @@ static void RGA2_reg_get_param(unsigned char *base, struct rga2_req *msg)
     reg = ((reg & (~m_RGA2_SRC_INFO_SW_SW_SRC_VSCL_MODE)) | (s_RGA2_SRC_INFO_SW_SW_SRC_VSCL_MODE(y_flag)));
 }
 
-static void RGA2_set_mode_ctrl(u8 *base, struct rga2_req *msg)
+void
+RGA2_set_mode_ctrl(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_MODE_CTL;
     RK_U32 reg = 0;
@@ -148,7 +150,8 @@ static void RGA2_set_mode_ctrl(u8 *base, struct rga2_req *msg)
     *bRGA_MODE_CTL = reg;
 }
 
-static void RGA2_set_reg_src_info(RK_U8 *base, struct rga2_req *msg)
+void
+RGA2_set_reg_src_info(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_SRC_INFO;
     RK_U32 *bRGA_SRC_BASE0, *bRGA_SRC_BASE1, *bRGA_SRC_BASE2;
@@ -310,7 +313,9 @@ static void RGA2_set_reg_src_info(RK_U8 *base, struct rga2_req *msg)
     *bRGA_SRC_TR_COLOR1 = msg->color_key_max;
 }
 
-static void RGA2_set_reg_dst_info(u8 *base, struct rga2_req *msg)
+
+void
+RGA2_set_reg_dst_info(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_DST_INFO;
     RK_U32 *bRGA_DST_BASE0, *bRGA_DST_BASE1, *bRGA_DST_BASE2, *bRGA_SRC_BASE3;
@@ -565,7 +570,8 @@ static void RGA2_set_reg_dst_info(u8 *base, struct rga2_req *msg)
     *bRGA_SRC_BASE3 = (RK_U32)s_y_lt_addr;
 }
 
-static void RGA2_set_reg_alpha_info(u8 *base, struct rga2_req *msg)
+void
+RGA2_set_reg_alpha_info(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_ALPHA_CTRL0;
     RK_U32 *bRGA_ALPHA_CTRL1;
@@ -612,7 +618,8 @@ static void RGA2_set_reg_alpha_info(u8 *base, struct rga2_req *msg)
     }
 }
 
-static void RGA2_set_reg_rop_info(u8 *base, struct rga2_req *msg)
+void
+RGA2_set_reg_rop_info(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_ALPHA_CTRL0;
     RK_U32 *bRGA_ROP_CTRL0;
@@ -652,7 +659,10 @@ static void RGA2_set_reg_rop_info(u8 *base, struct rga2_req *msg)
 
 }
 
-static void RGA2_set_reg_color_palette(RK_U8 *base, struct rga2_req *msg)
+
+
+void
+RGA2_set_reg_color_palette(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_SRC_BASE0, *bRGA_SRC_INFO, *bRGA_SRC_VIR_INFO, *bRGA_SRC_ACT_INFO, *bRGA_SRC_FG_COLOR, *bRGA_SRC_BG_COLOR;
     RK_U32  *p;
@@ -711,7 +721,8 @@ static void RGA2_set_reg_color_palette(RK_U8 *base, struct rga2_req *msg)
 
 }
 
-static void RGA2_set_reg_color_fill(u8 *base, struct rga2_req *msg)
+void
+RGA2_set_reg_color_fill(u8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_CF_GR_A;
     RK_U32 *bRGA_CF_GR_B;
@@ -758,7 +769,9 @@ static void RGA2_set_reg_color_fill(u8 *base, struct rga2_req *msg)
 	*bRGA_SRC_VIR_INFO = mask_stride << 16;
 }
 
-static void RGA2_set_reg_update_palette_table(RK_U8 *base, struct rga2_req *msg)
+
+void
+RGA2_set_reg_update_palette_table(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_MASK_BASE;
     RK_U32 *bRGA_FADING_CTRL;
@@ -771,7 +784,8 @@ static void RGA2_set_reg_update_palette_table(RK_U8 *base, struct rga2_req *msg)
 }
 
 
-static void RGA2_set_reg_update_patten_buff(RK_U8 *base, struct rga2_req *msg)
+void
+RGA2_set_reg_update_patten_buff(RK_U8 *base, struct rga2_req *msg)
 {
     u32 *bRGA_PAT_MST;
     u32 *bRGA_PAT_CON;
@@ -802,7 +816,9 @@ static void RGA2_set_reg_update_patten_buff(RK_U8 *base, struct rga2_req *msg)
     *bRGA_FADING_CTRL = (num << 8) | offset;
 }
 
-static void RGA2_set_pat_info(RK_U8 *base, struct rga2_req *msg)
+
+void
+RGA2_set_pat_info(RK_U8 *base, struct rga2_req *msg)
 {
     u32 *bRGA_PAT_CON;
     u32 *bRGA_FADING_CTRL;
@@ -825,7 +841,9 @@ static void RGA2_set_pat_info(RK_U8 *base, struct rga2_req *msg)
     *bRGA_FADING_CTRL = (num << 8) | offset;
 }
 
-static void RGA2_set_mmu_info(RK_U8 *base, struct rga2_req *msg)
+
+void
+RGA2_set_mmu_info(RK_U8 *base, struct rga2_req *msg)
 {
     RK_U32 *bRGA_MMU_CTRL1;
     RK_U32 *bRGA_MMU_SRC_BASE;
@@ -895,7 +913,7 @@ RGA2_gen_reg_info(RK_U8 *base , struct rga2_req *msg)
 
 }
 
-static void format_name_convert(uint32_t *df, uint32_t sf)
+void format_name_convert(uint32_t *df, uint32_t sf)
 {
     /*
     RK_FORMAT_RGBA_8888    = 0x0,
@@ -1167,7 +1185,7 @@ void RGA_MSG_2_RGA2_MSG(struct rga_req *req_rga, struct rga2_req *req)
     }
 }
 
-static void memcpy_img_info(struct rga_img_info_t *dst, struct rga_img_info_32_t *src)
+void memcpy_img_info(struct rga_img_info_t *dst, struct rga_img_info_32_t *src)
 {
     dst->yrgb_addr = src->yrgb_addr;      /* yrgb    mem addr         */
     dst->uv_addr = src->uv_addr;        /* cb/cr   mem addr         */
@@ -1184,7 +1202,6 @@ static void memcpy_img_info(struct rga_img_info_t *dst, struct rga_img_info_32_t
     dst->endian_mode = src->endian_mode; //for BPP
     dst->alpha_swap = src->alpha_swap;
 }
-
 void RGA_MSG_2_RGA2_MSG_32(struct rga_req_32 *req_rga, struct rga2_req *req)
 {
 	u16 alpha_mode_0, alpha_mode_1;

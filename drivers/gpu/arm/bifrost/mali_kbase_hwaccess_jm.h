@@ -86,7 +86,6 @@ bool kbase_backend_use_ctx(struct kbase_device *kbdev,
  * kbase_backend_use_ctx_sched() - Activate a context.
  * @kbdev:	Device pointer
  * @kctx:	Context pointer
- * @js:         Job slot to activate context on
  *
  * kbase_gpu_next_job() will pull atoms from the active context.
  *
@@ -100,7 +99,7 @@ bool kbase_backend_use_ctx(struct kbase_device *kbdev,
  *	   not have an address space assigned)
  */
 bool kbase_backend_use_ctx_sched(struct kbase_device *kbdev,
-					struct kbase_context *kctx, int js);
+					struct kbase_context *kctx);
 
 /**
  * kbase_backend_release_ctx_irq - Release a context from the GPU. This will
